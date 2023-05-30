@@ -1,7 +1,10 @@
 import React from 'react'
+import { useReducer } from 'react'
+import DigitButton from './DigitButton'
+import OperationButton from './OperationButton'
 import './styles.css'
 
-const ACTIONS = {
+export const ACTIONS = {
   ADD_DIGIT: 'add-digit',
   CHOOSE_OPERATION: 'choose-operation',
   CLEAR: 'clear',
@@ -10,21 +13,59 @@ const ACTIONS = {
 }
 
 
-function reducer (state, {action}) {
+function reducer (state, { type, payload }) {
+  // eslint-disable-next-line default-case
   switch(type) {
     case ACTIONS.ADD_DIGIT:
-    return {
+      if (state.overwrite) {
+      return {
       ...state,
-      currentOperand: `${currentOperand || "" }${payload.digit}`
+      // eslint-disable-next-line no-undef
+      currentOperand: payload.digit, 
+      overwrite: false,
     }
   }
+      if (payload.digit === '0' && state.currentOperand === '0') {
+        return state
+      }
+      if (payload.digit === '.' && state.currentOperand.includes('.')) {
+        return state 
+      }
+      return {
+        ...state,
+        currentOperand: `${state.currentOperand || ""}${payload.digit}`,
+      }
+      case ACTIONS.CHOOSE_OPERATION: 
+      if (state.currentOperand == null && state.previousOperand == null) {
+        return state
+      }
+      if (state.currentOperand == null) {
+        return {
+          ...state,
+          operation:payload.operation,
+        }
+      }
+      if (state.previousOperand == null) {
+        return {
+          ...state, 
+          operation: payload.operation,
+          previousOperand: state.currentOperand,
+          currentOperand:null,
+        }
+      }
+      return {
+        ...state,
+        previousOperand: evaluate(state), 
+        operation: payload.operation, 
+        currentOperand:null,
+      }
+
 }
 
-
 function App() {
-  const [{currentOperand, previousOperand, operation}, dispacth] = useReducer(reducer, {})
+  const [{currentOperand, previousOperand, operation}, dispatch] = useReducer(reducer, {})
 
-  dispacth({ type: ACTIONS.ADD_DIGIT, payload: { digit: 1}})
+  // dispacth({ type: ACTIONS.ADD_DIGIT, payload: { digit: 1}})
 
   return( 
      <div className = 'calculator-grid'>
@@ -35,7 +76,7 @@ function App() {
 
       <button className="span-two">AC</button>
       <button>DEL</button>
-      <button>/</button>
+      <DigitButton digit = "/" dispact = {dispatch}/>
       <button>1</button>
       <button>2</button>
       <button>3</button>
