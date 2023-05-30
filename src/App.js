@@ -60,7 +60,81 @@ function reducer (state, { type, payload }) {
         currentOperand:null,
       }
 
+      case ACTIONS.CLEAR: 
+      return {}
+      
+      case ACTIONS.DELETE_DIGIT: 
+        if (state.overwrite) {
+          return {
+            ...state, 
+            overwrite: false,
+            currentOperand:null,
+          }
+        }
+
+        if (state.currentOperand == null) return state
+        if (state.currentOperand.length === 1) {
+          return {...state, currentOperand:null}
+        }
+        return {
+          ...state,
+          currentOperand: state.currentOperand.slice(0-1),
+        }
+
+      case ACTIONS.EVALUATE: 
+      if (
+        state.operation == null || 
+        state.currentOperand == null || 
+        state.previousOperand == null 
+      ) {
+        return state 
+      }
+
+      return {
+        ...state,
+        overwrite: true, 
+        previousOperand: null, 
+        operation: null,
+        currentOperand: evaluate(state),
+      }
+      default:
+        return state 
+    }
 }
+
+function evaluate({ currentOperand, previousOperand, operation }) {
+  const prev = parseFloat(previousOperand)
+  const current = parseFloat(currentOperand)
+  if (isNaN(prev) || isNaN(current)) return ''
+  let computation = ''
+  switch (operation) {
+    case '+':
+      computation = prev + current
+      break
+    case '-':
+      computation = prev - current
+      break
+    case '*':
+      computation = prev * current
+      break
+    case '%':
+      computation = prev / current
+      break
+    default:
+      break
+  }
+  return computation.toString()
+  
+  }
+  
+
+  
+  const formatOperand = (operand) => {
+  if (operand == null) return ''
+  return new Intl.NumberFormat('en-US').format(operand)
+  }
+
+
 
 function App() {
   const [{currentOperand, previousOperand, operation}, dispatch] = useReducer(reducer, {})
